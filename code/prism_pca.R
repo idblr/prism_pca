@@ -7,11 +7,12 @@
 ## Author: Ian Buller (@idblr)
 ## Date created: November, 8 2018
 ##
-## Modified on:
-## Modified by:
+## Most Recently Modified on: December 3, 2018
+## Most Recently Modified by: Ian Buller
 ##
 ## Modifications:
-# A)
+# A) 12/03/2018: Added two other variable standardization options
+# B) 12/03/2018: Added third principal component
 ## ------------------------------------- #
 
 # -------- ####
@@ -63,7 +64,6 @@ prism::get_prism_normals(type= "tdmean"
                          ,annual = TRUE
                          ,keepZip=FALSE)
 
-
 # Convert to Rasters
 ppt <- prism::ls_prism_data(absPath=T)[1,2]
 ppt_rast <- raster::raster(ppt)
@@ -80,8 +80,8 @@ vpdmax_rast <- raster::raster(vpdmax)
 vpdmin <- prism::ls_prism_data(absPath=T)[7,2]
 vpdmin_rast <- raster::raster(vpdmin)
 
-# Reproject PRISM Rasters
-crs_us <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+# Set Projection of PRISM Rasters
+crs_us <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" # original CRS
 reproj_ppt_rast <- raster::projectRaster(ppt_rast, crs = crs(crs_us))
 reproj_tdmean_rast <- raster::projectRaster(tdmean_rast, crs = crs(crs_us))
 reproj_tmax_rast <- raster::projectRaster(tmax_rast, crs = crs(crs_us))
@@ -90,17 +90,37 @@ reproj_tmin_rast <- raster::projectRaster(tmin_rast, crs = crs(crs_us))
 reproj_vpdmax_rast <- raster::projectRaster(vpdmax_rast, crs = crs(crs_us))
 reproj_vpdmin_rast <- raster::projectRaster(vpdmin_rast, crs = crs(crs_us))
 
-# Scale Rasters by Range Transformation (can do other scaling)
-scaled_reproj_ppt_rast <- (reproj_ppt_rast-min(na.omit(reproj_ppt_rast@data@values)))/(max(na.omit(reproj_ppt_rast@data@values))-min(na.omit(reproj_ppt_rast@data@values)))
-scaled_reproj_tdmean_rast <- (reproj_tdmean_rast-min(na.omit(reproj_tdmean_rast@data@values)))/(max(na.omit(reproj_tdmean_rast@data@values))-min(na.omit(reproj_tdmean_rast@data@values)))
-scaled_reproj_tmax_rast <- (reproj_tmax_rast-min(na.omit(reproj_tmax_rast@data@values)))/(max(na.omit(reproj_tmax_rast@data@values))-min(na.omit(reproj_tmax_rast@data@values)))
-scaled_reproj_tmean_rast <- (reproj_tmean_rast-min(na.omit(reproj_tmean_rast@data@values)))/(max(na.omit(reproj_tmean_rast@data@values))-min(na.omit(reproj_tmean_rast@data@values)))
-scaled_reproj_tmin_rast <- (reproj_tmin_rast-min(na.omit(reproj_tmin_rast@data@values)))/(max(na.omit(reproj_tmin_rast@data@values))-min(na.omit(reproj_tmin_rast@data@values)))
-scaled_reproj_vpdmax_rast <- (reproj_vpdmax_rast-min(na.omit(reproj_vpdmax_rast@data@values)))/(max(na.omit(reproj_vpdmax_rast@data@values))-min(na.omit(reproj_vpdmax_rast@data@values)))
-scaled_reproj_vpdmin_rast <-(reproj_vpdmin_rast-min(na.omit(reproj_vpdmin_rast@data@values)))/(max(na.omit(reproj_vpdmin_rast@data@values))-min(na.omit(reproj_vpdmin_rast@data@values)))
+## Standardize rasters for more appropriate comparisons
+
+# Standardize Rasters by Range Transformation
+stand_reproj_ppt_rast <- (reproj_ppt_rast-min(na.omit(reproj_ppt_rast@data@values)))/(max(na.omit(reproj_ppt_rast@data@values))-min(na.omit(reproj_ppt_rast@data@values)))
+stand_reproj_tdmean_rast <- (reproj_tdmean_rast-min(na.omit(reproj_tdmean_rast@data@values)))/(max(na.omit(reproj_tdmean_rast@data@values))-min(na.omit(reproj_tdmean_rast@data@values)))
+stand_reproj_tmax_rast <- (reproj_tmax_rast-min(na.omit(reproj_tmax_rast@data@values)))/(max(na.omit(reproj_tmax_rast@data@values))-min(na.omit(reproj_tmax_rast@data@values)))
+stand_reproj_tmean_rast <- (reproj_tmean_rast-min(na.omit(reproj_tmean_rast@data@values)))/(max(na.omit(reproj_tmean_rast@data@values))-min(na.omit(reproj_tmean_rast@data@values)))
+stand_reproj_tmin_rast <- (reproj_tmin_rast-min(na.omit(reproj_tmin_rast@data@values)))/(max(na.omit(reproj_tmin_rast@data@values))-min(na.omit(reproj_tmin_rast@data@values)))
+stand_reproj_vpdmax_rast <- (reproj_vpdmax_rast-min(na.omit(reproj_vpdmax_rast@data@values)))/(max(na.omit(reproj_vpdmax_rast@data@values))-min(na.omit(reproj_vpdmax_rast@data@values)))
+stand_reproj_vpdmin_rast <-(reproj_vpdmin_rast-min(na.omit(reproj_vpdmin_rast@data@values)))/(max(na.omit(reproj_vpdmin_rast@data@values))-min(na.omit(reproj_vpdmin_rast@data@values)))
+
+# # Standardize Rasters by Z-Transformation
+# stand_reproj_ppt_rast <- (reproj_ppt_rast-mean(na.omit(reproj_ppt_rast@data@values)))/sd(na.omit(reproj_ppt_rast@data@values))
+# stand_reproj_tdmean_rast <- (reproj_tdmean_rast-mean(na.omit(reproj_tdmean_rast@data@values)))/sd(na.omit(reproj_tdmean_rast@data@values))
+# stand_reproj_tmax_rast <- (reproj_tmax_rast-mean(na.omit(reproj_tmax_rast@data@values)))/sd(na.omit(reproj_tmax_rast@data@values))
+# stand_reproj_tmean_rast <- (reproj_tmean_rast-mean(na.omit(reproj_tmean_rast@data@values)))/sd(na.omit(reproj_tmean_rast@data@values))
+# stand_reproj_tmin_rast <- (reproj_tmin_rast-mean(na.omit(reproj_tmin_rast@data@values)))/sd(na.omit(reproj_tmin_rast@data@values))
+# stand_reproj_vpdmax_rast <- (reproj_vpdmax_rast-mean(na.omit(reproj_vpdmax_rast@data@values)))/sd(na.omit(reproj_vpdmax_rast@data@values))
+# stand_reproj_vpdmin_rast <- (reproj_vpdmin_rast-mean(na.omit(reproj_vpdmin_rast@data@values)))/sd(na.omit(reproj_vpdmin_rast@data@values))
+
+# # Standardize Rasters by scale function
+# stand_reproj_ppt_rast <- scale(reproj_ppt_rast, center=TRUE, scale=TRUE)
+# stand_reproj_tdmean_rast <- scale(reproj_tdmean_rast, center=TRUE, scale=TRUE)
+# stand_reproj_tmax_rast <- scale(reproj_tmax_rast, center=TRUE, scale=TRUE)
+# stand_reproj_tmean_rast <- scale(reproj_tmean_rast, center=TRUE, scale=TRUE)
+# stand_reproj_tmin_rast <- scale(reproj_tmin_rast, center=TRUE, scale=TRUE)
+# stand_reproj_vpdmax_rast <- scale(reproj_vpdmax_rast, center=TRUE, scale=TRUE)
+# stand_reproj_vpdmin_rast <- scale(reproj_vpdmin_rast, center=TRUE, scale=TRUE)
 
 # ---------------------------- ####
-# Principal Component Analysis #
+# PRINCIPAL COMPONENT ANALYSIS #
 # ---------------------------- ####
 # Raster Stack for PCA
 rasters_scaled <- raster::stack(scaled_reproj_ppt_rast, scaled_reproj_tdmean_rast,scaled_reproj_tmax_rast,scaled_reproj_tmean_rast,scaled_reproj_tmin_rast,scaled_reproj_vpdmax_rast,scaled_reproj_vpdmin_rast)
@@ -114,11 +134,13 @@ pca1$model$loadings # PCA loadings
 pc1 <- pca1$map
 pc1_b1 <- pc1[[1]] # PC1
 pc1_b2 <- pc1[[2]] # PC2
+pc1_b3 <- pc1[[3]] # PC3
 
 # ------------------ ####
 # DATA VISUALIZATION #
 # ------------------ ####
-# Mask scaled rasters by study area (window)
+# Mask standardized rasters by study area (window)
+# Here, example using California, USA
 us <- raster::getData("GADM", country="USA", level=1) # get US polygon data
 ca <- us[match(toupper("California"),toupper(us$NAME_1)),] # get California polygon
 # Extract outline in order to create buffer to capture all of PRISM
@@ -132,7 +154,11 @@ ca_buffer <- rgeos::gBuffer(regs, width=0.1, byid=TRUE) # same projection as crs
 # Mask for California
 mask_pc1 <- mask(pc1_b1, ca_buffer)
 mask_pc2 <- mask(pc1_b2, ca_buffer)
+mask_pc3 <- mask(pc1_b3, ca_buffer)
 
 # Plot Principal Components
 plot(mask_pc1, ext = ca_buffer)
 plot(mask_pc2, ext = ca_buffer)
+plot(mask_pc3, ext = ca_buffer)
+
+# ----- End of Code ----- #
