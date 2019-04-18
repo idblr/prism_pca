@@ -7,12 +7,14 @@
 ## Author: Ian Buller (@idblr)
 ## Date created: November, 8 2018
 ##
-## Most Recently Modified on: December 3, 2018
+## Most Recently Modified on: April 18, 2019
 ## Most Recently Modified by: Ian Buller
 ##
 ## Modifications:
 # A) 12/03/2018: Added two other variable standardization options
 # B) 12/03/2018: Added third principal component
+# C) 04/18/2019: Fixed object names of standardized rasters and raster stack for PCA
+# D) 04/18/2019: Added side-by-side plot of PC1 and PC2 with same colorkey
 ## ------------------------------------- #
 
 # -------- ####
@@ -123,10 +125,10 @@ stand_reproj_vpdmin_rast <-(reproj_vpdmin_rast-min(na.omit(reproj_vpdmin_rast@da
 # PRINCIPAL COMPONENT ANALYSIS #
 # ---------------------------- ####
 # Raster Stack for PCA
-rasters_scaled <- raster::stack(scaled_reproj_ppt_rast, scaled_reproj_tdmean_rast,scaled_reproj_tmax_rast,scaled_reproj_tmean_rast,scaled_reproj_tmin_rast,scaled_reproj_vpdmax_rast,scaled_reproj_vpdmin_rast)
+rasters_stand <- raster::stack(stand_reproj_ppt_rast, stand_reproj_tdmean_rast,stand_reproj_tmax_rast,stand_reproj_tmean_rast,stand_reproj_tmin_rast,stand_reproj_vpdmax_rast,stand_reproj_vpdmin_rast)
 
 # Spatial PCA
-pca1 <- RStoolbox::rasterPCA(rasters_scaled)
+pca1 <- RStoolbox::rasterPCA(rasters_stand)
 summary(pca1$model) # PCA components
 pca1$model$loadings # PCA loadings
 
@@ -160,5 +162,48 @@ mask_pc3 <- mask(pc1_b3, ca_buffer)
 plot(mask_pc1, ext = ca_buffer)
 plot(mask_pc2, ext = ca_buffer)
 plot(mask_pc3, ext = ca_buffer)
+
+# Side-by-side plot of PC1 and PC2 with same colorkey
+#tikz(file = "figures/chap3/ca_pca.tex", width = 6, height = 5)
+grDevices::pdf(file = "ca_pca.pdf", width = 7, height = 5)
+  par(mfrow = c(1,2), mai = c(0.3, 0.1, 0.3, 0.1))
+# PC1
+  raster::plot(mask_pc1, ext = ca_buffer, axes = F, box = F,
+               horizontal = TRUE, zlim = c(mask_pc2@data@min,mask_pc1@data@max),
+               legend.width=1, legend.shrink=0.7,
+               legend.args=list(text='coefficient', side=1, font=2, 
+                                line=-2.5, cex=0.8
+                                ),
+               axis.args = list(labels = c(round(mask_pc2@data@min, digits = 2),
+                                           -0.5,0.0,0.5,
+                                           round(mask_pc1@data@max, digits = 1)
+                                           ),
+                                at = c(mask_pc2@data@min,
+                                       -0.5,0.0,0.5,
+                                       mask_pc1@data@max
+                                       )
+                                ),
+               main = "Principal component 1",
+               cex.main = 1
+               )
+# PC2
+  raster::plot(mask_pc2, ext = ca_buffer, axes = F, box = F,
+               horizontal = TRUE, zlim = c(mask_pc2@data@min,mask_pc1@data@max),
+               legend.args=list(text='coefficient', side=1, font=2, 
+                                line=-2.5, cex=0.8
+                                ),
+               axis.args = list(labels = c(round(mask_pc2@data@min, digits = 2),
+                                           -0.5,0.0,0.5,
+                                           round(mask_pc1@data@max, digits = 1)
+                                           ),
+                                at = c(mask_pc2@data@min,
+                                       -0.5,0.0,0.5,
+                                       mask_pc1@data@max
+                                       )
+                                ),
+               legend.width=1, legend.shrink=0.7,
+               main = "Principal component 2",
+               cex.main = 1)
+  dev.off()
 
 # ----- End of Code ----- #
