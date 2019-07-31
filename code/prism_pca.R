@@ -5,7 +5,7 @@
 ## Masked for California, USA
 ## 
 ## Author: Ian Buller (@idblr)
-## Date created: November, 8 2018
+## Date created: November 8, 2018
 ##
 ## Most Recently Modified on: April 18, 2019
 ## Most Recently Modified by: Ian Buller
